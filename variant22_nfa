@@ -1,0 +1,15 @@
+// Finite Automaton
+digraph {
+	rankdir=LR
+	start [label="" height=0 shape=none width=0]
+	start -> q0
+	q0 [label=q0 shape=circle]
+	q2 [label=q2 shape=doublecircle]
+	q1 [label=q1 shape=circle]
+	q0 -> q0 [label=a]
+	q0 -> q1 [label=b]
+	q1 -> q0 [label=a]
+	q1 -> q2 [label=b]
+	q1 -> q1 [label=b]
+	q2 -> q1 [label=b]
+}
