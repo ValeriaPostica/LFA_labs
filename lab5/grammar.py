@@ -250,6 +250,7 @@ class Grammar:
         grammar = self.with_new_start_symbol()
 
         terminal_replacements: Dict[Symbol, Symbol] = {}
+        binary_replacements: Dict[Tuple[Symbol, Symbol], Symbol] = {}
 
         def get_terminal_nonterminal(terminal: Symbol) -> Symbol:
             if terminal in terminal_replacements:
@@ -259,6 +260,18 @@ class Grammar:
             grammar.productions.setdefault(new_nt, set()).add((terminal,))
             updated.setdefault(new_nt, set()).add((terminal,))
             terminal_replacements[terminal] = new_nt
+            return new_nt
+
+        def get_binary_nonterminal(left: Symbol, right: Symbol) -> Symbol:
+            pair = (left, right)
+            if pair in binary_replacements:
+                return binary_replacements[pair]
+
+            new_nt = grammar._fresh_nonterminal("X")
+            grammar.vn.add(new_nt)
+            grammar.productions.setdefault(new_nt, set()).add(pair)
+            updated.setdefault(new_nt, set()).add(pair)
+            binary_replacements[pair] = new_nt
             return new_nt
 
         updated: Productions = {nt: set() for nt in grammar.vn}
@@ -288,16 +301,12 @@ class Grammar:
                 if len(replaced_rhs) == 2:
                     updated[lhs].add(tuple(replaced_rhs))
                 else:
-                    chain_left = lhs
                     symbols = replaced_rhs
-                    for i in range(len(symbols) - 2):
-                        first = symbols[i]
-                        helper = grammar._fresh_nonterminal("X")
-                        grammar.vn.add(helper)
-                        grammar.productions.setdefault(helper, set())
-                        updated.setdefault(chain_left, set()).add((first, helper))
-                        chain_left = helper
-                    updated.setdefault(chain_left, set()).add((symbols[-2], symbols[-1]))
+                    while len(symbols) > 2:
+                        helper = get_binary_nonterminal(symbols[-2], symbols[-1])
+                        symbols = symbols[:-2] + [helper]
+
+                    updated.setdefault(lhs, set()).add(tuple(symbols))
 
         for nt in grammar.vn:
             updated.setdefault(nt, set())
